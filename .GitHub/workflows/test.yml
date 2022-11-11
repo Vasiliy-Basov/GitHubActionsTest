@@ -1,0 +1,24 @@
+
+name: Test
+
+on:                                 # Слушаем события
+  pull_request:                     # Этот код запустится и проверит код который пришел с pool request
+  push:
+    branches:
+      - master                      # Код запустится при попадении в  master
+
+jobs:
+  lint:                             # lint это имя
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]        # Описание веосий которые мы используем (Node.js 12)
+    steps:
+      - uses: actions/checkout@v2   # копирует репозиторий на VM которую мы создали
+      - uses: actions/setup-node@v1 # Node.js устанавливается на сервер
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci                 # Установка специального npm для автоматизации (быстрее работает)
+      - run: npm test               # Это команда теста которую мы описали в package.json
+                                    # В json команда test запускает editorconfig-checker который в свою
+                                    # очередь проверяет соответствие нашего кода файлу .editorconfig
