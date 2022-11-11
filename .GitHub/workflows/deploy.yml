@@ -1,0 +1,29 @@
+
+name: Deploy
+
+on:
+  push:
+    branches:
+      - master   # Срабатывает только про при push в мастер
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      # Setup key Нам нужно в secrets github cоздайть ключ и прописать туда публичный для подключения к серверу в который будем делать deploy по имени key
+      - run: set -eu                 # Это команды по установке ключа в нужное место
+      - run: mkdir "$HOME/.ssh"
+      - run: echo "${{ secrets.key }}" > "$HOME/.ssh/key"
+      - run: chmod 600 "$HOME/.ssh/key"
+      # Build
+      - run: npm ci
+      - run: npm run build
+      # Deploy. С помощью rsync и установленного ssh ключа копируем наш сайт на наш web сервер
+      - run: cd dist && rsync -e "ssh -i $HOME/.ssh/key -o StrictHostKeyChecking=no" --archive --compress --delete . baggurd@172.18.0.2:/var/www/pepelsbey.dev/html/
